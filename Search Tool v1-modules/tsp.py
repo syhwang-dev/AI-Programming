@@ -1,69 +1,46 @@
 import random
 import math
 
-# Total number of evaluations: 2,323 와 비교했을 때 steepest는 약 세 배 정도 더 걸림.
-
-
 LIMIT_STUCK = 100 # Max number of evaluations enduring no improvement
-NumEval = 0    # Total number of evaluations
+NumEval = 0
 
-
-def main():
-    # Create an instance of TSP
-    p = createProblem()    # 'p': (numCities, locations, distanceTable)
-    # Call the search algorithm
-    solution, minimum = firstChoice(p)
-    # Show the problem and algorithm settings
-    describeProblem(p)
-    displaySetting()
-    # Report results
-    displayResult(solution, minimum)
-    
 def createProblem():
     ## Read in a TSP (# of cities, locatioins) from a file.
     ## Then, create a problem instance and return it.
     fileName = input("Enter the file name of a TSP: ")
     infile = open(fileName, 'r')
     # First line is number of cities
-    numCities = int(infile.readline())
+    numCities = int(infile.readline())  # 도시의 수
     locations = []
     line = infile.readline()  # The rest of the lines are locations
     while line != '':
-        locations.append(eval(line)) # Make a tuple and append
+        locations.append(eval(line)) # Make a tuple and append / eval(): 있는 그대로 실행
         line = infile.readline()
     infile.close()
-    table = calcDistanceTable(numCities, locations)
+    table = calcDistanceTable(numCities, locations)  # locations: tuple로 구성된 리스트 
     return numCities, locations, table
-
 
 def calcDistanceTable(numCities, locations): ###
     table = [] # 2d
 
+    # 같은 도시라면 0이 나올 것임.
+    # (1, 1) = 0
+    # (2, 2) = 0
+
     for i in range(numCities):
+        # 첫번째 도시에 대한 다른 도시의 거리
         row = []
         for j in range(numCities):
+            # print("locations[i]:", i, locations[i])
+            # print("locations[j]:", j, locations[j])
+
             dx = locations[i][0]-locations[j][0]  # x축
             dy = locations[i][1]-locations[j][1]  # y축
             d = round(math.sqrt(dx ** 2 + dy ** 2), 1)
             row.append(d)
         table.append(row)
+
     return table # A symmetric matrix of pairwise distances
-
-
-def firstChoice(p):
-    current = randomInit(p)   # 'current' is a list of city ids
-    valueC = evaluate(current, p)
-    i = 0
-    while i < LIMIT_STUCK:
-        successor = randomMutant(current, p)
-        valueS = evaluate(successor, p)
-        if valueS < valueC:
-            current = successor
-            valueC = valueS
-            i = 0              # Reset stuck counter
-        else:
-            i += 1
-    return current, valueC
 
 def randomInit(p):   # Return a random initial tour
     n = p[0]
@@ -71,47 +48,33 @@ def randomInit(p):   # Return a random initial tour
     random.shuffle(init)
     return init
 
-
 def evaluate(current, p): ###
-    ## Calculate the tour cost of 'current'
-    ## 'p' is a Problem instance
-    ## 'current' is a list of city ids
-
     global NumEval
     NumEval += 1
-
+    # numCities, locations, tables = p
     numCities = p[0]
     table = p[2]
     cost = 0
 
-    for i in range(numCities-1):
+    # print("p:", p)  # 디버깅이 안 될 때 사용
+
+    for i in range(numCities-1):  # 범위가 numCities까지 가면 안 됨.
         locFrom = current[i]
         locTo = current[i+1]
         cost += table[locFrom][locTo]
     
     # 끝에서 앞으로 되돌아가기
     cost += table[current[numCities-1]][current[0]]
+
     return cost
 
-
-def randomMutant(current, p): # Apply inversion
-    # i는 j보다 작아야 함.
-    while True:
-        i, j = sorted([random.randrange(p[0])
-                       for _ in range(2)])
-        if i < j:
-            curCopy = inversion(current, i, j)
-            break
-    return curCopy
-
-def inversion(current, i, j):  # Perform inversion
-    curCopy = current[:]
+def inversion(current, i, j):  ## Perform inversion
+    curCopy = current[:]  # 복사하기
     while i < j:
-        curCopy[i], curCopy[j] = curCopy[j], curCopy[i]
+        curCopy[i], curCopy[j] = curCopy[j], curCopy[i]  # 파이썬 장점: 임시 변수를 만들지 않고 이동
         i += 1
         j -= 1
     return curCopy
-
 
 def describeProblem(p):
     print()
@@ -126,7 +89,7 @@ def describeProblem(p):
 
 def displaySetting():
     print()
-    print("Search algorithm: First-Choice Hill Climbing")
+    print("Search algorithm: Steepest-Ascent Hill Climbing")
 
 def displayResult(solution, minimum):
     print()
@@ -141,5 +104,3 @@ def tenPerRow(solution):
         print("{0:>5}".format(solution[i]), end='')
         if i % 10 == 9:
             print()
-
-main()

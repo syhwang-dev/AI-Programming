@@ -1,31 +1,8 @@
-#### n: numerical optimization problem
-#### 제일 좋은 것을 찾는 것 → 연산을 많이 해야 함.
-#### 비교 > first-choice: 단순히 좋은 것을 찾는 것
-
-
 import random
 import math
 
-# 글로벌 변수
-DELTA = 0.001   # Mutation step size  // 스텝 사이즈가 너무 작아도 너무 커도 안 좋음.
-# 값이 작아질수록 세밀해지지만 동작 시간이 오래 걸림.
-# DELTA = 0.01   # Mutation step size
-NumEval = 0    # Total number of evaluations
-
-
-def main():
-    # Create an instance of numerical optimization problem
-    p = createProblem()   # 'p': (expr, domain)
-    # Call the search algorithm
-    solution, minimum = steepestAscent(p)
-    # Show the problem and algorithm settings
-    
-    # 출력 part
-    describeProblem(p)
-    displaySetting()
-    # Report results
-    displayResult(solution, minimum)
-
+DELTA = 0.01
+NumEval = 0
 
 def createProblem(): ###
     ## Read in an expression and its domain from a file.
@@ -57,25 +34,6 @@ def createProblem(): ###
 
     return expression, domain
 
-
-def steepestAscent(p):
-    # current: 시작점
-    current = randomInit(p) # 'current' is a list of values
-    valueC = evaluate(current, p)  # valueC: 시작점에 해당하는 함수값
-    while True:
-        neighbors = mutants(current, p)  # neighbors: 주변의 후보들을 의미
-        successor, valueS = bestOf(neighbors, p)  # bestOf: 제일 좋은 것을 찾아내는 함수 / successor, valueS: 변수, 함수값
-        # 현재보다 좋아지는지 판단을 해야 함.
-        # 계속 값을 낮추고 있는 중
-        if valueS >= valueC:  # 나빠진 것을 의미 - 멈춰야 함.
-            break
-        else:  # 그렇지 않으면 계속 진행해야 함.
-            # 업데이트
-            current = successor
-            valueC = valueS
-    return current, valueC
-
-# input으로 p가 들어감. / 도메인: 범위
 def randomInit(p): ###
     domain = p[1]
     low = domain[1]
@@ -103,25 +61,6 @@ def evaluate(current, p):
         exec(assignment)
     return eval(expr)
 
-# 한 줄 씩: statement
-# expression
-# x = exp 이렇게 주어질 때가 많음.
-# statement - exec 펑션 / expression - eval 펑션
-
-# mutants: 델타 상수 값으로 변화를 준다,
-def mutants(current, p): ###
-    neighbors = []
-    for i in range(len(current)):
-        mutant = mutate(current, i, DELTA, p)
-        neighbors.append(mutant)
-        mutant = mutate(current, i, -DELTA, p)
-        neighbors.append(mutant)
-
-
-    # 총 10개 출력?
-    return neighbors     # Return a set of successors
-
-# d = 델타 사이즈를 의미
 def mutate(current, i, d, p): ## Mutate i-th of 'current' if legal
     curCopy = current[:]
     domain = p[1]        # [VarNames, low, up]
@@ -130,26 +69,6 @@ def mutate(current, i, d, p): ## Mutate i-th of 'current' if legal
     if l <= (curCopy[i] + d) <= u:
         curCopy[i] += d
     return curCopy
-
-def bestOf(neighbors, p): ###
-    best = neighbors[0]
-    bestValue = evaluate(best, p)  # best 값을 찾음 / bestValue는 현재값
-
-    for i in range(1, len(neighbors)):
-        newValue = evaluate(neighbors[i], p)
-
-        if newValue < bestValue:  # 더 좋으면
-            best = neighbors[i]
-            bestValue = newValue 
-
-    # for neighbor in neighbors[1:]:
-    #     neighborValue = evaluate(neighbor, p)
-
-    #     if neighborValue > bestValue:
-    #         best = neighbor
-    #         bestValue = neighborValue
-
-    return best, bestValue
 
 def describeProblem(p):
     print()
@@ -179,6 +98,3 @@ def displayResult(solution, minimum):
 def coordinate(solution):
     c = [round(value, 3) for value in solution]
     return tuple(c)  # Convert the list to a tuple
-
-
-main()
